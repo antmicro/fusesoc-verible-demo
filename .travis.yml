@@ -1,0 +1,24 @@
+os: linux
+dist: bionic
+language: c++
+
+before_install:
+        - export DEBIAN_FRONTEND=noninteractive
+
+install:
+        - curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
+        - echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
+        - sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake ninja-build wget python3 python3-pip python3-setuptools make tar git bazel
+        - sudo pip3 install fusesoc
+script:
+        - pushd verible
+        - bazel build -c opt //...
+        - bazel run :install -c opt -- `pwd`/../verible_bin
+        - export PATH=`pwd`/../verible_bin/:$PATH
+        - popd
+        - pushd ibex
+        - sed -i '132i\          - "-generate-label"\n          - "-unpacked-dimensions-range-ordering"\n          - "-explicit-parameter-storage-type"\n          - "-line-length"\n          - "-module-filename"\n          - "-no-trailing-spaces"\n          - "-undersized-binary-literal"\n          - "-struct-union-name-style"\n          - "-case-missing-default"\n          - "-explicit-task-lifetime"\n          - "-explicit-function-lifetime"' ibex_core.core
+        - fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_core:0.1
+        - sed -i '154i\          - "--max_search_states"\n          - "10000000"' ibex_core.core
+        - fusesoc --cores-root . run --target=format lowrisc:ibex:ibex_core:0.1
+

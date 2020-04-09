@@ -1,0 +1,6 @@
+[submodule "verible"]
+	path = verible
+	url = https://github.com/google/verible
+[submodule "ibex"]
+	path = ibex
+	url = https://github.com/lowRISC/ibex
